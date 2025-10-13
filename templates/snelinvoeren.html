@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block main %}
+<h2>Snelinvoeren (UserForm)</h2>
+<form method="post" action="{{ url_for('api_snelinvoeren') }}">
+    <label>Datum: <input type="date" name="datum" required></label>
+    <label>Naam client:
+        <input list="clients" name="naam" required>
+        <datalist id="clients">
+            {% for c in clients %}
+                <option value="{{ c.naam_client }}">
+            {% endfor %}
+        </datalist>
+    </label>
+    <label>Tijd: <input type="time" name="tijd"></label>
+    <label>Contant: <input type="checkbox" name="contant"></label>
+    <label>Te ontvangen: <input type="number" step="0.01" name="te_ontvangen"></label>
+    <label>Opmerking: <input type="text" name="opmerking"></label>
+    <label>Bedrag incl. BTW: <input type="number" step="0.01" name="bedrag_incl"></label>
+    <label>BTW %: <input type="number" step="0.01" name="btw_incl_pct" value="21"></label>
+    <label>Factuurnummer: <input type="text" name="factuurnummer"></label>
+    <label>Debiteurnr: <input type="text" name="deb_nr"></label>
+    <button type="submit">Opslaan</button>
+</form>
+{% endblock %}

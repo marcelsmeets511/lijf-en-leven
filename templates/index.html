@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block main %}
+<h2>Hoofdmenu</h2>
+<div class="menu">
+    <a class="btn" href="{{ url_for('facturen_aanmaken') }}">Facturen aanmaken</a>
+    <a class="btn" href="{{ url_for('facturen_printen') }}">Facturen printen</a>
+    <a class="btn" href="{{ url_for('overzicht_aanmaken') }}">Overzicht aanmaken</a>
+    <a class="btn" href="{{ url_for('snelinvoeren') }}">Snelinvoeren</a>
+</div>
+{% endblock %}
