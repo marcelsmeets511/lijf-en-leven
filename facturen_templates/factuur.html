@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Factuur {{ factuurnummer }}</title>
+    <style>
+        body{font-family:Calibri, sans-serif;margin:0;color:#333}
+        .header{background:#ebebeb;padding:20px;text-align:center}
+        .logo{float:right;width:120px}
+        .adres{margin-top:20px}
+        .titel{font-size:14px;font-weight:bold;color:#666}
+        .subtitel{font-size:12px;font-style:italic;color:#666}
+        .factuurgegevens{margin:20px 0}
+        .table{width:100%;border-collapse:collapse;margin-top:20px}
+        .table th{background:#ebebeb;padding:8px;text-align:left}
+        .table td{padding:8px}
+        .totaal{font-weight:bold}
+        .footer{background:#ebebeb;padding:15px;text-align:center;font-size:10px;margin-top:40px}
+        .black-bar{background:#000;color:#fff;padding:8px;text-align:center}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo }}" class="logo" alt="Logo">
+        <div class="titel">Hein Kuipers</div>
+        <div class="subtitel">therapie – training – coaching</div>
+        <div class="subtitel">Erkend therapeut NVAGT, EAGT, NVPA en RBNG</div>
+        <div class="subtitel">AGB-code: 90116166 - AGB-code praktijk: 90092619 - KvK: 14129146</div>
+        <div>Retouradres: Sint Annalaan 21 – 6214 AA Maastricht</div>
+    </div>
+
+    <div class="adres">
+        <strong>{{ naam_client }}</strong><br>
+        {{ straat }}<br>
+        {{ postcode }} {{ woonplaats }}<br>
+        {{ land }}
+    </div>
+
+    <div class="factuurgegevens">
+        <table>
+            <tr><td>Factuurnr:</td><td><strong>{{ factuurnummer }}</strong></td></tr>
+            <tr><td>Debiteurnr:</td><td><strong>{{ deb_nr }}</strong></td></tr>
+            <tr><td>Datum:</td><td>Maastricht, {{ datum_vandaag }}</td></tr>
+        </table>
+    </div>
+
+    <div class="black-bar">Complementaire zorg</div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Omschrijving</th>
+                <th>Uren</th>
+                <th>Tarief</th>
+                <th>Bedrag</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for regel in regels %}
+            <tr>
+                <td>{{ regel.datum }}</td>
+                <td>{{ regel.omschrijving }}</td>
+                <td>{{ regel.uren }}</td>
+                <td>€ {{ "%.2f"|format(regel.tarief) }}</td>
+                <td>€ {{ "%.2f"|format(regel.bedrag) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4"><strong>BTW 21% (indien van toepassing)</strong></td>
+                <td>€ {{ "%.2f"|format(totaal_btw) }}</td>
+            </tr>
+            <tr class="totaal">
+                <td colspan="4"><strong>Totaal</strong></td>
+                <td>€ {{ "%.2f"|format(totaal_bedrag) }}</td>
+            </tr>
+            {% if contant %}
+            <tr>
+                <td colspan="4"><strong>Reeds contant betaald</strong></td>
+                <td>€ {{ "%.2f"|format(contant) }}</td>
+            </tr>
+            <tr class="totaal">
+                <td colspan="4"><strong>Nog te voldoen</strong></td>
+                <td>€ {{ "%.2f"|format(nog_te_voldoen) }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Gelieve bovenstaand bedrag vóór {{ betaaldatum }} over te maken naar</p>
+        <p><strong>rekeningnummer NL36TRIO 078.14.69.511 (H.J. Kuipers, Maastricht) o.v.v. factuurnummer</strong></p>
+        <p>www.lijfenleven.nu • Hein Kuipers • Sint Annalaan 21, 6214AA Maastricht • +31 06 24667302</p>
+        <p>info@lijfenleven.nu • IBAN NL36TRIO 0781469511 - BIC TRIONL2U • BTW NL 001674862B18</p>
+        <p>KvK 14129146</p>
+    </div>
+</body>
+</html>

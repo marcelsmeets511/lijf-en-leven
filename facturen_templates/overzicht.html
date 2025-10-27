@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Overzicht Consulten</title>
+    <style>
+        body{font-family:Calibri, sans-serif;margin:0;color:#333}
+        .header{background:#ebebeb;padding:20px;text-align:center}
+        .titel{font-size:18px;font-weight:bold;color:#666}
+        .subtitel{font-size:14px;font-style:italic;color:#666}
+        .table{width:100%;border-collapse:collapse;margin-top:20px}
+        .table th{background:#000;color:#fff;padding:8px;text-align:left}
+        .table td{padding:8px;border-bottom:1px solid #ddd}
+        .totaal{font-weight:bold;background:#f2f2f2}
+        .footer{margin-top:40px;text-align:center;font-size:10px}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="titel">OVERZICHT CONSULTEN PER NAAM</div>
+        <div class="subtitel">Hein Kuipers - Lijf en Leven Maastricht</div>
+        <div>Datum: {{ datum_vandaag }}</div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Naam client</th>
+                <th>Tijd</th>
+                <th>Contant</th>
+                <th>Te ontvangen</th>
+                <th>Opmerking</th>
+                <th>Bedrag ex.btw</th>
+                <th>BTW</th>
+                <th>Factuurbedrag</th>
+                <th>Factuurnummer</th>
+                <th>Datum ontvangst</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in overzicht %}
+            <tr class="{% if row.datum == 'TOTAAL' %}totaal{% endif %}">
+                <td>{{ row.datum }}</td>
+                <td>{{ row.naam_client }}</td>
+                <td>{{ row.tijd }}</td>
+                <td>{{ row.contant }}</td>
+                <td>{{ "%.2f"|format(row.te_ontvangen) if row.te_ontvangen else "" }}</td>
+                <td>{{ row.opmerking }}</td>
+                <td>{{ "%.2f"|format(row.bedrag_exbtw) if row.bedrag_exbtw else "" }}</td>
+                <td>{{ "%.2f"|format(row.btw) if row.btw else "" }}</td>
+                <td>{{ "%.2f"|format(row.factuurbedrag) if row.factuurbedrag else "" }}</td>
+                <td>{{ row.factuurnummer }}</td>
+                <td>{{ row.datum_ontvangst }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="totaal">
+                <td colspan="6"><strong>TOTAAL</strong></td>
+                <td><strong>€ {{ "%.2f"|format(totaal_ex) }}</strong></td>
+                <td><strong>€ {{ "%.2f"|format(totaal_btw) }}</strong></td>
+                <td><strong>€ {{ "%.2f"|format(totaal_inc) }}</strong></td>
+                <td colspan="2"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Lijf en Leven Maastricht | info@lijfenleven.nu | KvK 14129146</p>
+    </div>
+</body>
+</html>
