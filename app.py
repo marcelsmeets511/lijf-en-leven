@@ -5,6 +5,8 @@ from flask import Flask, render_template, request, redirect, jsonify
 from flask_mail import Mail
 from dotenv import load_dotenv          # ← nieuw
 from supabase import create_client, Client
+from flask import request, jsonify, render_template
+from math import ceil
 
 # ---------- LAAD .ENV BESTAND ----------
 # zoekt naar .env in dezelfde map als dit script
@@ -28,6 +30,8 @@ MAIL_USE_TLS = True
 MAIL_USERNAME = os.getenv("MAIL_USER")
 MAIL_PASSWORD = os.getenv("MAIL_PASS")
 MAIL_DEFAULT_SENDER = MAIL_USERNAME
+# ---------- PAGINERING ----------
+PER_PAGE = 50
 
 mail = Mail(app)
 sb: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -97,7 +101,15 @@ def api_client(naam):
 # ---------- CRUD BEWERKEN ----------
 @app.route("/clientenbewerken")
 def clientenbewerken():
-    return render_template("clientenform.html")
+    mode = request.args.get("mode", "form")          # form | table
+    page = int(request.args.get("page", 1))
+    if mode == "table":
+        total = sb.table("clienten").select("*", count="exact").execute().count
+        pages = ceil(total / PER_PAGE)
+        offset = (page - 1) * PER_PAGE
+        records = sb.table("clienten").select("*").range(offset, offset + PER_PAGE - 1).execute().data
+        return render_template("clientenform.html", mode="table", records=records, page=page, pages=pages)
+    return render_template("clientenform.html", mode="form")
 
 @app.route("/tarievenbewerken")
 def tarievenbewerken():

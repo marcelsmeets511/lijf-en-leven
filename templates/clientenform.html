@@ -1,15 +1,24 @@
 {% extends "base.html" %}
 {% block main %}
-  <h2>Clienten bewerken</h2>
+<h2>Clienten bewerken</h2>
 
+<!-- SWITCH -->
+<div style="margin-bottom:1rem">
+  <a class="btn" href="{{ url_for('clientenbewerken', mode='form') }}">Formulier-weergave</a>
+  <a class="btn" href="{{ url_for('clientenbewerken', mode='table', page=1) }}">Tabel-weergave</a>
+</div>
+
+<!-- FORMULIER MODE -->
+{% if mode == "form" %}
+  <!-- (bestaande form-weergave blijft ongewijzigd) -->
   <div class="form-grid">
     <label>ID</label><input id="id" readonly>
     <label>Achternaam</label><input id="naam_client" onfocus="setZoekVeld('naam_client')">
-    <label>Straat</label><input id="straatnaam">
-    <label>Postcode</label><input id="postcode">
-    <label>Woonplaats</label><input id="woonplaats">
-    <label>Email</label><input id="emailadres">
-    <label>Klant-ID</label><input id="klant_id">
+    <label>Straat</label><input id="straatnaam" onfocus="setZoekVeld('straatnaam')">
+    <label>Postcode</label><input id="postcode" onfocus="setZoekVeld('postcode')">
+    <label>Woonplaats</label><input id="woonplaats" onfocus="setZoekVeld('woonplaats')">
+    <label>Email</label><input id="emailadres" onfocus="setZoekVeld('emailadres')">
+    <label>Klant-ID</label><input id="klant_id" onfocus="setZoekVeld('klant_id')">
   </div>
 
   <button onclick="zoek()">Zoeken</button>
@@ -23,12 +32,8 @@
   <button onclick="laatste()">Laatste</button>
 
   <script>
-    let records = [];
-    let huidigeIdx = 0;
-    let zoekVeld = "naam_client";
-
-    function setZoekVeld(veld){ zoekVeld = veld; }
-
+    let records = [], huidigeIdx = 0, zoekVeld = "naam_client";
+    function setZoekVeld(v){ zoekVeld = v; }
     async function laadRecords(){
       const resp = await fetch("/api/records/clienten");
       records = await resp.json();
@@ -39,7 +44,8 @@
       const r = records[idx];
       huidigeIdx = idx;
       document.getElementById("recordnr").value = idx + 1;
-      for(const[k,v] of Object.entries(r)) if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
+      for(const[k,v] of Object.entries(r))
+        if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
     }
     async function zoek(){
       const waarde = document.getElementById(zoekVeld).value;
@@ -73,7 +79,7 @@
       });
       records.splice(huidigeIdx,1);
       if(records.length) toonRecord(Math.min(huidigeIdx, records.length-1));
-      else document.querySelector("form").reset();
+      else document.querySelector(".form-grid").reset();
       alert("Verwijderd");
     }
     function eerste(){toonRecord(0);}
@@ -84,7 +90,135 @@
       const nr = parseInt(document.getElementById("recordnr").value) - 1;
       if(nr>=0 && nr<records.length) toonRecord(nr);
     }
-
     laadRecords();
   </script>
+
+<!-- TABEL MODE – BEWERKBARE GRID -->
+{% else %}
+<div style="margin-bottom:1rem">
+  <input id="zoekText" placeholder="Zoeken op naam…">
+  <button onclick="zoekInTabel()">Zoeken</button>
+  <button onclick="nieuwRecord()">Nieuw</button>
+  <button onclick="opslaanTabel()">Opslaan</button>
+  <button onclick="verwijderenTabel()">Verwijderen</button>
+</div>
+
+<table class="table table-bordered" style="width:100%">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Achternaam</th>
+      <th>Straat</th>
+      <th>Postcode</th>
+      <th>Woonplaats</th>
+      <th>Email</th>
+      <th>Klant-ID</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody">
+    {% for r in records %}
+    <tr data-id="{{ r.id }}">
+      <td><input type="text" value="{{ r.id }}" readonly style="width:100%"></td>
+      <td><input type="text" value="{{ r.naam_client }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.straatnaam }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.postcode }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.woonplaats }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.emailadres }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.klant_id }}" style="width:100%"></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<nav>
+  {% if page > 1 %}
+    <a class="btn" href="{{ url_for('clientenbewerken', mode='table', page=page-1) }}">Vorige</a>
+  {% endif %}
+  <span>Pagina {{ page }} van {{ pages }}</span>
+  {% if page < pages %}
+    <a class="btn" href="{{ url_for('clientenbewerken', mode='table', page=page+1) }}">Volgende</a>
+  {% endif %}
+</nav>
+
+<script>
+  // ---------- BEWERKEN VANUIT TABEL ----------
+  function nieuwRecord(){
+    const tbody = document.getElementById("tableBody");
+    const newRow = tbody.insertRow();
+    newRow.innerHTML = `
+      <td><input value="" readonly style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>`;
+    newRow.querySelector("td:nth-child(2) input").focus();
+  }
+
+  async function opslaanTabel(){
+    const rows = document.querySelectorAll("#tableBody tr");
+    for(const tr of rows){
+      const inputs = tr.querySelectorAll("input");
+      const data = {
+        id: inputs[0].value || None,
+        naam_client: inputs[1].value,
+        straatnaam: inputs[2].value,
+        postcode: inputs[3].value,
+        woonplaats: inputs[4].value,
+        emailadres: inputs[5].value,
+        klant_id: inputs[6].value
+      };
+      await fetch("/api/opslaan/clienten",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
+    }
+    alert("Alle wijzigingen opgeslagen");
+    location.reload();          // herlaadt huidige pagina
+  }
+
+  async function verwijderenTabel(){
+    const sel = document.querySelector("tr:focus");
+    if(!sel && !confirm("Weet je zeker dat je de actieve rij(en) wilt verwijderen?")) return;
+    const rows = sel ? [sel] : Array.from(document.querySelectorAll("#tableBody tr"));
+    for(const tr of rows){
+      const id = tr.querySelector("input").value;
+      if(id){
+        await fetch("/api/verwijder/clienten",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({id})
+        });
+        tr.remove();
+      }
+    }
+    alert("Verwijderd");
+  }
+
+  async function zoekInTabel(){
+    const q = document.getElementById("zoekText").value;
+    const resp = await fetch("/api/zoek/clienten",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({veld:"naam_client", waarde:q})
+    });
+    const data = await resp.json();
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    data.forEach(r=>{
+      const tr = tbody.insertRow();
+      tr.innerHTML = `
+        <td><input value="${r.id}" readonly style="width:100%"></td>
+        <td><input value="${r.naam_client}" style="width:100%"></td>
+        <td><input value="${r.straatnaam}" style="width:100%"></td>
+        <td><input value="${r.postcode}" style="width:100%"></td>
+        <td><input value="${r.woonplaats}" style="width:100%"></td>
+        <td><input value="${r.emailadres}" style="width:100%"></td>
+        <td><input value="${r.klant_id}" style="width:100%"></td>`;
+    });
+  }
+</script>
+{% endif %}
 {% endblock %}
