@@ -1,23 +1,20 @@
 {% extends "base.html" %}
 {% block main %}
 <h2>Hoofdmenu</h2>
-<div class="menu">
-  <table border="0">
-    <tbody>
-      <th>
-        <td>
-          <a class="btn" href="{{ url_for('facturen_aanmaken') }}">Facturen aanmaken</a>
-          <a class="btn" href="{{ url_for('facturen_printen') }}">Facturen printen</a>
-          <a class="btn" href="{{ url_for('overzicht_aanmaken') }}">Overzicht aanmaken</a>
-          <a class="btn" href="{{ url_for('snelinvoeren') }}">Snelinvoeren</a>
-        </td>
-        <td>
-          <a class="btn" href="{{ url_for('clientenbewerken') }}">Clienten zoeken/bewerken/verwijderen</a>
-          <a class="btn" href="{{ url_for('tarievenbewerken') }}">Tarieven zoeken/bewerken/verwijderen</a>
-          <a class="btn" href="{{ url_for('overzichtbewerken') }}">Overzicht zoeken/bewerken/verwijderen</a>
-        </td>
-      </th>
-    </tbody>
-  </table>
+<div class="menu" style="display: flex; gap: 2rem;">
+  <!-- Kolom 1: eerste 4 knoppen onder elkaar -->
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <a class="btn" href="{{ url_for('facturen_aanmaken') }}">Facturen aanmaken</a>
+    <a class="btn" href="{{ url_for('facturen_printen') }}">Facturen printen</a>
+    <a class="btn" href="{{ url_for('overzicht_aanmaken') }}">Overzicht aanmaken</a>
+    <a class="btn" href="{{ url_for('snelinvoeren') }}">Snelinvoeren</a>
+  </div>
+
+  <!-- Kolom 2: volgende 3 knoppen onder elkaar -->
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <a class="btn" href="{{ url_for('clientenbewerken') }}">Clienten zoeken/bewerken/verwijderen</a>
+    <a class="btn" href="{{ url_for('tarievenbewerken') }}">Tarieven zoeken/bewerken/verwijderen</a>
+    <a class="btn" href="{{ url_for('overzichtbewerken') }}">Overzicht zoeken/bewerken/verwijderen</a>
+  </div>
 </div>
 {% endblock %}
