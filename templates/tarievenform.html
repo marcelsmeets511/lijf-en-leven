@@ -1,50 +1,208 @@
 {% extends "base.html" %}
 {% block main %}
-  <h2>Tarieven bewerken</h2>
-  <div class="form-grid">
-    <label>ID</label><input id="id" readonly>
-    <label>Item</label><input id="item" onfocus="setZoekVeld('item')">
-    <label>Bedrag</label><input id="bedrag" type="number" step="0.01">
-    <label>BTW %</label><input id="btw_incl_pct" type="number" step="0.01">
-    <label>Omschrijving</label><input id="omschrijving_op_factuur">
-  </div>
+<h2>Tarieven bewerken</h2>
 
-  <button onclick="zoek()">Zoeken</button>
-  <button onclick="opslaan()">Opslaan</button>
-  <button onclick="verwijderen()">Verwijderen</button>
-  <br>
-  <button onclick="eerste()">Eerste</button>
-  <button onclick="vorige()">Vorige</button>
-  <input id="recordnr" type="number" onchange="gaNaarRecord()">
-  <button onclick="volgende()">Volgende</button>
-  <button onclick="laatste()">Laatste</button>
+<!-- SWITCH -->
+<div style="margin-bottom:1rem">
+  <a class="btn" href="{{ url_for('tarievenbewerken', mode='form') }}">Formulier-weergave</a>
+  <a class="btn" href="{{ url_for('tarievenbewerken', mode='table', page=1) }}">Tabel-weergave</a>
+</div>
 
-  <script>
-    let records = [], huidigeIdx = 0, zoekVeld = "item";
-    function setZoekVeld(v){ zoekVeld = v; }
-    async function laadRecords(){
-      records = await (await fetch("/api/records/tarieven")).json();
-      if(records.length) toonRecord(0);
+<!-- FORMULIER MODE -->
+{% if mode == "form" %}
+<div class="form-grid">
+  <label>ID</label><input id="id" readonly>
+  <label>Item</label><input id="item" onfocus="setZoekVeld('item')">
+  <label>Bedrag</label><input id="bedrag" type="number" step="0.01">
+  <label>BTW %</label><input id="btw_incl_pct" type="number" step="0.01">
+  <label>Omschrijving</label><input id="omschrijving_op_factuur">
+</div>
+
+<button onclick="zoek()">Zoeken</button>
+<button onclick="opslaan()">Opslaan</button>
+<button onclick="verwijderen()">Verwijderen</button>
+<br>
+<button onclick="eerste()">Eerste</button>
+<button onclick="vorige()">Vorige</button>
+<input id="recordnr" type="number" onchange="gaNaarRecord()">
+<button onclick="volgende()">Volgende</button>
+<button onclick="laatste()">Laatste</button>
+
+<script>
+  let records = [], huidigeIdx = 0, zoekVeld = "item";
+  function setZoekVeld(v){ zoekVeld = v; }
+  async function laadRecords(){
+    const resp = await fetch("/api/records/tarieven");
+    records = await resp.json();
+    if(records.length) toonRecord(0);
+  }
+  function toonRecord(idx){
+    if(!records.length) return;
+    const r = records[idx];
+    huidigeIdx = idx;
+    document.getElementById("recordnr").value = idx + 1;
+    for(const[k,v] of Object.entries(r))
+      if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
+  }
+  async function zoek(){
+    const waarde = document.getElementById(zoekVeld).value;
+    const resp = await fetch("/api/zoek/tarieven",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({veld: zoekVeld, waarde})
+    });
+    records = await resp.json();
+    if(records.length) toonRecord(0);
+  }
+  async function opslaan(){
+    const data = {};
+    document.querySelectorAll("input[id]").forEach(inp=> data[inp.id] = inp.value);
+    const resp = await fetch("/api/opslaan/tarieven",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(data)
+    });
+    const updated = await resp.json();
+    records[huidigeIdx] = updated;
+    alert("Opgeslagen");
+  }
+  async function verwijderen(){
+    if(!confirm("Record definitief verwijderen?")) return;
+    const id = document.getElementById("id").value;
+    await fetch("/api/verwijder/tarieven",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({id})
+    });
+    records.splice(huidigeIdx,1);
+    if(records.length) toonRecord(Math.min(huidigeIdx, records.length-1));
+    else document.querySelector(".form-grid").reset();
+    alert("Verwijderd");
+  }
+  function eerste(){toonRecord(0);}
+  function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);}
+  function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);}
+  function laatste(){toonRecord(records.length-1);}
+  function gaNaarRecord(){
+    const nr = parseInt(document.getElementById("recordnr").value) - 1;
+    if(nr>=0 && nr<records.length) toonRecord(nr);
+  }
+  laadRecords();
+</script>
+
+<!-- TABEL MODE – BEWERKBARE GRID -->
+{% else %}
+<div style="margin-bottom:1rem">
+  <input id="zoekText" placeholder="Zoeken op item…">
+  <button onclick="zoekInTabel()">Zoeken</button>
+  <button onclick="nieuwRecord()">Nieuw</button>
+  <button onclick="opslaanTabel()">Opslaan</button>
+  <button onclick="verwijderenTabel()">Verwijderen</button>
+</div>
+
+<table class="table table-bordered" style="width:100%">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Item</th>
+      <th>Bedrag</th>
+      <th>BTW %</th>
+      <th>Omschrijving</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody">
+    {% for r in records %}
+    <tr data-id="{{ r.id }}">
+      <td><input type="text" value="{{ r.id }}" readonly style="width:100%"></td>
+      <td><input type="text" value="{{ r.item }}" style="width:100%"></td>
+      <td><input type="number" step="0.01" value="{{ r.bedrag }}" style="width:100%"></td>
+      <td><input type="number" step="0.01" value="{{ r.btw_incl_pct }}" style="width:100%"></td>
+      <td><input type="text" value="{{ r.omschrijving_op_factuur }}" style="width:100%"></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<nav>
+  {% if page > 1 %}
+    <a class="btn" href="{{ url_for('tarievenbewerken', mode='table', page=page-1) }}">Vorige</a>
+  {% endif %}
+  <span>Pagina {{ page }} van {{ pages }}</span>
+  {% if page < pages %}
+    <a class="btn" href="{{ url_for('tarievenbewerken', mode='table', page=page+1) }}">Volgende</a>
+  {% endif %}
+</nav>
+
+<script>
+  function nieuwRecord(){
+    const tbody = document.getElementById("tableBody");
+    const newRow = tbody.insertRow();
+    newRow.innerHTML = `
+      <td><input value="" readonly style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>
+      <td><input type="number" step="0.01" value="" style="width:100%"></td>
+      <td><input type="number" step="0.01" value="" style="width:100%"></td>
+      <td><input value="" style="width:100%"></td>`;
+    newRow.querySelector("td:nth-child(2) input").focus();
+  }
+
+  async function opslaanTabel(){
+    const rows = document.querySelectorAll("#tableBody tr");
+    for(const tr of rows){
+      const inputs = tr.querySelectorAll("input");
+      const data = {
+        id: inputs[0].value || null,
+        item: inputs[1].value,
+        bedrag: parseFloat(inputs[2].value),
+        btw_incl_pct: parseFloat(inputs[3].value),
+        omschrijving_op_factuur: inputs[4].value
+      };
+      await fetch("/api/opslaan/tarieven",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
     }
-    function toonRecord(idx){
-      if(!records.length) return;
-      const r = records[idx]; huidigeIdx = idx;
-      document.getElementById("recordnr").value = idx + 1;
-      for(const[k,v] of Object.entries(r)) if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
+    alert("Alle wijzigingen opgeslagen");
+    location.reload();
+  }
+
+  async function verwijderenTabel(){
+    const rows = document.querySelectorAll("#tableBody tr");
+    for(const tr of rows){
+      const id = tr.querySelector("input").value;
+      if(id){
+        await fetch("/api/verwijder/tarieven",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({id})
+        });
+        tr.remove();
+      }
     }
-    async function zoek(){
-      const w = document.getElementById(zoekVeld).value;
-      records = await (await fetch("/api/zoek/tarieven",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({veld:zoekVeld,waarde:w})})).json();
-      if(records.length) toonRecord(0);
-    }
-    async function opslaan(){
-      const d={}; document.querySelectorAll("input[id]").forEach(i=>d[i.id]=i.value);
-      const updated = await (await fetch("/api/opslaan/tarieven",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)})).json();
-      records[huidigeIdx]=updated; alert("Opgeslagen");
-    }
-    async function verwijderen(){if(!confirm("Record definitief verwijderen?"))return; await fetch("/api/verwijder/tarieven",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:document.getElementById("id").value})}); records.splice(huidigeIdx,1); if(records.length)toonRecord(Math.min(huidigeIdx,records.length-1)); else document.querySelector(".form-grid").reset();alert("Verwijderd");}
-    function eerste(){toonRecord(0);} function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);} function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);} function laatste(){toonRecord(records.length-1);}
-    function gaNaarRecord(){const nr=parseInt(document.getElementById("recordnr").value)-1;if(nr>=0&&nr<records.length)toonRecord(nr);}
-    laadRecords();
-  </script>
+    alert("Verwijderd");
+  }
+
+  async function zoekInTabel(){
+    const q = document.getElementById("zoekText").value;
+    const resp = await fetch("/api/zoek/tarieven",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({veld:"item", waarde:q})
+    });
+    const data = await resp.json();
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    data.forEach(r=>{
+      const tr = tbody.insertRow();
+      tr.innerHTML = `
+        <td><input value="${r.id}" readonly style="width:100%"></td>
+        <td><input value="${r.item}" style="width:100%"></td>
+        <td><input type="number" step="0.01" value="${r.bedrag}" style="width:100%"></td>
+        <td><input type="number" step="0.01" value="${r.btw_incl_pct}" style="width:100%"></td>
+        <td><input value="${r.omschrijving_op_factuur}" style="width:100%"></td>`;
+    });
+  }
+</script>
+{% endif %}
 {% endblock %}
