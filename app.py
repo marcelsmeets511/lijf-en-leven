@@ -113,6 +113,7 @@ def clientenbewerken():
 
 @app.route("/tarievenbewerken")
 def tarievenbewerken():
+    mode = request.args.get("mode", "form")          # form | table
     page = int(request.args.get("page", 1))
     if mode == "table":
         total = sb.table("tarieven").select("*", count="exact").execute().count
@@ -124,6 +125,7 @@ def tarievenbewerken():
 
 @app.route("/overzichtbewerken")
 def overzichtbewerken():
+    mode = request.args.get("mode", "form")          # form | table
     page = int(request.args.get("page", 1))
     if mode == "table":
         total = sb.table("overzicht").select("*", count="exact").execute().count
