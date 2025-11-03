@@ -113,11 +113,25 @@ def clientenbewerken():
 
 @app.route("/tarievenbewerken")
 def tarievenbewerken():
-    return render_template("tarievenform.html")
+    page = int(request.args.get("page", 1))
+    if mode == "table":
+        total = sb.table("tarieven").select("*", count="exact").execute().count
+        pages = ceil(total / PER_PAGE)
+        offset = (page - 1) * PER_PAGE
+        records = sb.table("tarieven").select("*").range(offset, offset + PER_PAGE - 1).execute().data
+        return render_template("tarievenform.html", mode="table", records=records, page=page, pages=pages)
+    return render_template("tarievenform.html", mode="form")
 
 @app.route("/overzichtbewerken")
 def overzichtbewerken():
-    return render_template("overzichtform.html")
+    page = int(request.args.get("page", 1))
+    if mode == "table":
+        total = sb.table("overzicht").select("*", count="exact").execute().count
+        pages = ceil(total / PER_PAGE)
+        offset = (page - 1) * PER_PAGE
+        records = sb.table("overzicht").select("*").range(offset, offset + PER_PAGE - 1).execute().data
+        return render_template("overzichtform.html", mode="table", records=records, page=page, pages=pages)
+    return render_template("overzichtform.html", mode="form")
 
 # ---------- API: ZOEKEN ----------
 @app.post("/api/zoek/<tabel>")
