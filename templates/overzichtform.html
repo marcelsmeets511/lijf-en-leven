@@ -1,10 +1,5 @@
-<!doctype html>
-<html>
-<head>
-  <title>Overzicht bewerken</title>
-  <style>.form-grid{display:grid;grid-template-columns:150px 300px;gap:8px;margin-bottom:12px}button{margin:4px}</style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block main %}
   <h2>Overzicht bewerken</h2>
   <div class="form-grid">
     <label>ID</label><input id="id" readonly>
@@ -61,5 +56,4 @@
     function gaNaarRecord(){const nr=parseInt(document.getElementById("recordnr").value)-1;if(nr>=0&&nr<records.length)toonRecord(nr);}
     laadRecords();
   </script>
-</body>
-</html>
+{% endblock %}
