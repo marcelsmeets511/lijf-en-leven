@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <title>Overzicht bewerken</title>
+  <style>.form-grid{display:grid;grid-template-columns:150px 300px;gap:8px;margin-bottom:12px}button{margin:4px}</style>
+</head>
+<body>
+  <h2>Overzicht bewerken</h2>
+  <div class="form-grid">
+    <label>ID</label><input id="id" readonly>
+    <label>Datum</label><input id="datum_dienst" type="date" onfocus="setZoekVeld('datum_dienst')">
+    <label>Naam</label><input id="naam" onfocus="setZoekVeld('naam')">
+    <label>Tijd</label><input id="tijd" type="time">
+    <label>Contant</label><select id="contant"><option value="true">Ja</option><option value="false">Nee</option></select>
+    <label>Te ontvangen</label><input id="te_ontvangen" type="number" step="0.01">
+    <label>Opmerking</label><input id="opmerking">
+    <label>Bedrag</label><input id="bedrag" type="number" step="0.01">
+    <label>Factuurnr</label><input id="factuurnummer">
+    <label>Debiteurnr</label><input id="deb_nr">
+  </div>
+
+  <button onclick="zoek()">Zoeken</button>
+  <button onclick="opslaan()">Opslaan</button>
+  <button onclick="verwijderen()">Verwijderen</button>
+  <br>
+  <button onclick="eerste()">Eerste</button>
+  <button onclick="vorige()">Vorige</button>
+  <input id="recordnr" type="number" onchange="gaNaarRecord()">
+  <button onclick="volgende()">Volgende</button>
+  <button onclick="laatste()">Laatste</button>
+
+  <script>
+    let records = [], huidigeIdx = 0, zoekVeld = "naam";
+    function setZoekVeld(v){ zoekVeld = v; }
+    async function laadRecords(){
+      records = await (await fetch("/api/records/overzicht")).json();
+      if(records.length) toonRecord(0);
+    }
+    function toonRecord(idx){
+      if(!records.length) return;
+      const r = records[idx]; huidigeIdx = idx;
+      document.getElementById("recordnr").value = idx + 1;
+      for(const[k,v] of Object.entries(r)) {
+        const el = document.getElementById(k);
+        if(el) el.value = v ?? "";
+      }
+    }
+    async function zoek(){
+      const w = document.getElementById(zoekVeld).value;
+      records = await (await fetch("/api/zoek/overzicht",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({veld:zoekVeld,waarde:w})})).json();
+      if(records.length) toonRecord(0);
+    }
+    async function opslaan(){
+      const d={}; document.querySelectorAll("input[id],select[id]").forEach(i=>d[i.id]=i.value);
+      d.contant = d.contant === "true";
+      const updated = await (await fetch("/api/opslaan/overzicht",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)})).json();
+      records[huidigeIdx]=updated; alert("Opgeslagen");
+    }
+    async function verwijderen(){if(!confirm("Record definitief verwijderen?"))return; await fetch("/api/verwijder/overzicht",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:document.getElementById("id").value})}); records.splice(huidigeIdx,1); if(records.length)toonRecord(Math.min(huidigeIdx,records.length-1)); else document.querySelector(".form-grid").reset();alert("Verwijderd");}
+    function eerste(){toonRecord(0);} function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);} function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);} function laatste(){toonRecord(records.length-1);}
+    function gaNaarRecord(){const nr=parseInt(document.getElementById("recordnr").value)-1;if(nr>=0&&nr<records.length)toonRecord(nr);}
+    laadRecords();
+  </script>
+</body>
+</html>

@@ -94,6 +94,60 @@ def api_client(naam):
     c = sb.table("clienten").select("*").ilike("naam_client", naam).execute().data
     return jsonify(c[0] if c else {})
 
+# ---------- CRUD BEWERKEN ----------
+@app.route("/clientenbewerken")
+def clientenbewerken():
+    return render_template("clientenform.html")
+
+@app.route("/tarievenbewerken")
+def tarievenbewerken():
+    return render_template("tarievenform.html")
+
+@app.route("/overzichtbewerken")
+def overzichtbewerken():
+    return render_template("overzichtform.html")
+
+# ---------- API: ZOEKEN ----------
+@app.post("/api/zoek/<tabel>")
+def api_zoek(tabel):
+    data = request.json
+    veld = data["veld"]
+    waarde = data["waarde"]
+    resp = sb.table(tabel).select("*").ilike(veld, f"%{waarde}%").execute()
+    return jsonify(resp.data)
+
+# ---------- API: OPSLAAN ----------
+@app.post("/api/opslaan/<tabel>")
+def api_opslaan(tabel):
+    data = request.json
+    # UUID kolom heet altijd "id"
+    if "id" in data and data["id"]:
+        sb.table(tabel).update(data).eq("id", data["id"]).execute()
+    else:
+        resp = sb.table(tabel).insert(data).execute()
+        data["id"] = resp.data[0]["id"]
+    return jsonify(data)
+
+# ---------- API: VERWIJDEREN ----------
+@app.post("/api/verwijder/<tabel>")
+def api_verwijder(tabel):
+    data = request.json
+    sb.table(tabel).delete().eq("id", data["id"]).execute()
+    return jsonify({"status": "ok"})
+
+# ---------- API: RECORDS + NAVIGATIE ----------
+@app.get("/api/records/<tabel>")
+def api_records(tabel):
+    resp = sb.table(tabel).select("*").order("id").execute()
+    return jsonify(resp.data)
+
+@app.get("/api/record/<tabel>/<int:index>")
+def api_record(tabel, index):
+    resp = sb.table(tabel).select("*").order("id").execute()
+    if 0 <= index < len(resp.data):
+        return jsonify(resp.data[index])
+    return jsonify({})
+
 # ---------- START FLASK ----------
 if __name__ == "__main__":
     app.run(debug=True)

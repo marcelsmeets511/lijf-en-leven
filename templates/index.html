@@ -2,9 +2,22 @@
 {% block main %}
 <h2>Hoofdmenu</h2>
 <div class="menu">
-    <a class="btn" href="{{ url_for('facturen_aanmaken') }}">Facturen aanmaken</a>
-    <a class="btn" href="{{ url_for('facturen_printen') }}">Facturen printen</a>
-    <a class="btn" href="{{ url_for('overzicht_aanmaken') }}">Overzicht aanmaken</a>
-    <a class="btn" href="{{ url_for('snelinvoeren') }}">Snelinvoeren</a>
+  <table border="0">
+    <tbody>
+      <th>
+        <td>
+          <a class="btn" href="{{ url_for('facturen_aanmaken') }}">Facturen aanmaken</a>
+          <a class="btn" href="{{ url_for('facturen_printen') }}">Facturen printen</a>
+          <a class="btn" href="{{ url_for('overzicht_aanmaken') }}">Overzicht aanmaken</a>
+          <a class="btn" href="{{ url_for('snelinvoeren') }}">Snelinvoeren</a>
+        </td>
+        <td>
+          <a class="btn" href="{{ url_for('clientenbewerken') }}">Clienten zoeken/bewerken/verwijderen</a>
+          <a class="btn" href="{{ url_for('tarievenbewerken') }}">Tarieven zoeken/bewerken/verwijderen</a>
+          <a class="btn" href="{{ url_for('overzichtbewerken') }}">Overzicht zoeken/bewerken/verwijderen</a>
+        </td>
+      </th>
+    </tbody>
+  </table>
 </div>
 {% endblock %}

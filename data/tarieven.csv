@@ -1,0 +1,45 @@
+item;bedrag;BTW (incl) in %;omschrijving op factuur
+PGB1;34,65;0;persoonlijke begeleiding
+PGB2;69,30;0;persoonlijke begeleiding
+PGB3;103,95;0;persoonlijke begeleiding
+PGB4;138,60;0;persoonlijke begeleiding
+intake1-1;70,00;0;consult intake Gestalt therapie
+1-1reg;75,00;0;consult Gestalt therapie
+1-1mid;65,00;0;consult Gestalt therapie
+1-1laag;50,00;0;consult Gestalt therapie
+1-1B;40,00;0;consult Gestalt therapie
+1-1laagN;55,00;0;consult
+coachbedr;124,50;0;coaching
+coachregN;80,00;0;coaching
+coach78;78,00;0;sessie coaching medewerker
+coach87;105,90;0;coaching
+coach90;108,90;0;coaching
+geest40;45,00;0;consult geestelijke verzorging
+geest;90,00;0;consult geestelijke verzorging
+bedrijfsarts;73,87;0;verstrekken schriftelijke informatie 
+intakeGroep;50,00;0;consult intake
+groepreg;35,00;0;consult
+groepmid;30,00;0;consult
+groeplaag;25,00;0;consult
+grdagreg;0,00;0;consult
+grdagmid;0,00;0;consult
+grdaglaag;0,00;0;consult
+grwndreg;0,00;0;consult
+grwndmid;0,00;0;consult
+grwndlaag;0,00;0;consult
+bedrijfscoaching;145,20;0;coaching
+GVex;75,00;0;vacatie 1,5 uur overleg
+cons75;75,00;0;consult
+cons60;60,00;0;consult Gestalt therapie
+cons70;70,00;0;consult Gestalt therapie
+geest2;180,00;0;consult geestelijke verzorging
+Manopreis5;350,00;0;Man op reis, 5 daagse
+Manopreis5/2;250,00;0;Man op reis, 5 daagse
+Manindenacht2021;45,00;0;Man in de Nacht 2021
+1-1-78reg;78,00;0;consult Gestalt therapie
+1-1-68mid;68,00;0;consult Gestalt therapie
+1-1-58laag;58,00;0;consult Gestalt therapie
+intake1-1-2022;70,00;0;consult intake Gestalt therapie
+1-1-reg80;80,00;0;consult Gestalt therapie
+coach-80;80,00;0;Gestalt coaching
+coach-70;70,00;0;Gestalt coaching

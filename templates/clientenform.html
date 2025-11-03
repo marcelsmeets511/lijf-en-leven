@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <title>Clienten bewerken</title>
+  <style>
+    .form-grid{display:grid;grid-template-columns:150px 300px;gap:8px;margin-bottom:12px}
+    button{margin:4px}
+  </style>
+</head>
+<body>
+  <h2>Clienten bewerken</h2>
+
+  <div class="form-grid">
+    <label>ID</label><input id="id" readonly>
+    <label>Achternaam</label><input id="naam_client" onfocus="setZoekVeld('naam_client')">
+    <label>Straat</label><input id="straatnaam">
+    <label>Postcode</label><input id="postcode">
+    <label>Woonplaats</label><input id="woonplaats">
+    <label>Email</label><input id="emailadres">
+    <label>Klant-ID</label><input id="klant_id">
+  </div>
+
+  <button onclick="zoek()">Zoeken</button>
+  <button onclick="opslaan()">Opslaan</button>
+  <button onclick="verwijderen()">Verwijderen</button>
+  <br>
+  <button onclick="eerste()">Eerste</button>
+  <button onclick="vorige()">Vorige</button>
+  <input id="recordnr" type="number" onchange="gaNaarRecord()">
+  <button onclick="volgende()">Volgende</button>
+  <button onclick="laatste()">Laatste</button>
+
+  <script>
+    let records = [];
+    let huidigeIdx = 0;
+    let zoekVeld = "naam_client";
+
+    function setZoekVeld(veld){ zoekVeld = veld; }
+
+    async function laadRecords(){
+      const resp = await fetch("/api/records/clienten");
+      records = await resp.json();
+      if(records.length) toonRecord(0);
+    }
+    function toonRecord(idx){
+      if(!records.length) return;
+      const r = records[idx];
+      huidigeIdx = idx;
+      document.getElementById("recordnr").value = idx + 1;
+      for(const[k,v] of Object.entries(r)) if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
+    }
+    async function zoek(){
+      const waarde = document.getElementById(zoekVeld).value;
+      const resp = await fetch("/api/zoek/clienten",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({veld: zoekVeld, waarde})
+      });
+      records = await resp.json();
+      if(records.length) toonRecord(0);
+    }
+    async function opslaan(){
+      const data = {};
+      document.querySelectorAll("input[id]").forEach(inp=> data[inp.id] = inp.value);
+      const resp = await fetch("/api/opslaan/clienten",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
+      const updated = await resp.json();
+      records[huidigeIdx] = updated;
+      alert("Opgeslagen");
+    }
+    async function verwijderen(){
+      if(!confirm("Record definitief verwijderen?")) return;
+      const id = document.getElementById("id").value;
+      await fetch("/api/verwijder/clienten",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({id})
+      });
+      records.splice(huidigeIdx,1);
+      if(records.length) toonRecord(Math.min(huidigeIdx, records.length-1));
+      else document.querySelector("form").reset();
+      alert("Verwijderd");
+    }
+    function eerste(){toonRecord(0);}
+    function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);}
+    function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);}
+    function laatste(){toonRecord(records.length-1);}
+    function gaNaarRecord(){
+      const nr = parseInt(document.getElementById("recordnr").value) - 1;
+      if(nr>=0 && nr<records.length) toonRecord(nr);
+    }
+
+    laadRecords();
+  </script>
+</body>
+</html>

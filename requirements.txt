@@ -4,3 +4,4 @@ supabase==1.2.0
 weasyprint==59.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
+pandas
