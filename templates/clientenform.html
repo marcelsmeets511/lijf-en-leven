@@ -10,88 +10,131 @@
 
 <!-- FORMULIER MODE -->
 {% if mode == "form" %}
-  <!-- (bestaande form-weergave blijft ongewijzigd) -->
-  <div class="form-grid">
-    <label>ID</label><input id="id" readonly>
-    <label>Achternaam</label><input id="naam_client" onfocus="setZoekVeld('naam_client')">
-    <label>Straat</label><input id="straatnaam" onfocus="setZoekVeld('straatnaam')">
-    <label>Postcode</label><input id="postcode" onfocus="setZoekVeld('postcode')">
-    <label>Woonplaats</label><input id="woonplaats" onfocus="setZoekVeld('woonplaats')">
-    <label>Email</label><input id="emailadres" onfocus="setZoekVeld('emailadres')">
-    <label>Klant-ID</label><input id="klant_id" onfocus="setZoekVeld('klant_id')">
-  </div>
+<div class="form-grid">
+  <label>ID</label><input id="id" readonly>
+  <label>Achternaam</label><input id="naam_client" onfocus="setZoekVeld('naam_client')">
+  <label>Straat</label><input id="straatnaam" onfocus="setZoekVeld('straatnaam')">
+  <label>Postcode</label><input id="postcode" onfocus="setZoekVeld('postcode')">
+  <label>Woonplaats</label><input id="woonplaats" onfocus="setZoekVeld('woonplaats')">
+  <label>Email</label><input id="emailadres" onfocus="setZoekVeld('emailadres')">
+  <label>Klant-ID</label><input id="klant_id" onfocus="setZoekVeld('klant_id')">
+</div>
 
-  <button onclick="zoek()">Zoeken</button>
-  <button onclick="opslaan()">Opslaan</button>
-  <button onclick="verwijderen()">Verwijderen</button>
-  <br>
-  <button onclick="eerste()">Eerste</button>
-  <button onclick="vorige()">Vorige</button>
-  <input id="recordnr" type="number" onchange="gaNaarRecord()">
-  <button onclick="volgende()">Volgende</button>
-  <button onclick="laatste()">Laatste</button>
+<button onclick="zoek()">Zoeken</button>
+<button onclick="opslaan()">Opslaan</button>
+<button onclick="verwijderen()">Verwijderen</button>
+<button onclick="nieuwRecord()">Nieuw record</button>
+<br>
+<button onclick="eerste()">Eerste</button>
+<button onclick="vorige()">Vorige</button>
+<input id="recordnr" type="number" onchange="gaNaarRecord()">
+<button onclick="volgende()">Volgende</button>
+<button onclick="laatste()">Laatste</button>
 
-  <script>
-    let records = [], huidigeIdx = 0, zoekVeld = "naam_client";
-    function setZoekVeld(v){ zoekVeld = v; }
-    async function laadRecords(){
-      const resp = await fetch("/api/records/clienten");
-      records = await resp.json();
-      if(records.length) toonRecord(0);
-    }
-    function toonRecord(idx){
-      if(!records.length) return;
-      const r = records[idx];
-      huidigeIdx = idx;
-      document.getElementById("recordnr").value = idx + 1;
-      for(const[k,v] of Object.entries(r))
-        if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
-    }
-    async function zoek(){
-      const waarde = document.getElementById(zoekVeld).value;
-      const resp = await fetch("/api/zoek/clienten",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({veld: zoekVeld, waarde})
-      });
-      records = await resp.json();
-      if(records.length) toonRecord(0);
-    }
-    async function opslaan(){
-      const data = {};
-      document.querySelectorAll("input[id]").forEach(inp=> data[inp.id] = inp.value);
-      const resp = await fetch("/api/opslaan/clienten",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(data)
-      });
-      const updated = await resp.json();
+<script>
+  let records = [], huidigeIdx = 0, zoekVeld = "naam_client";
+  let isNew = false; // <-- nieuw flag
+
+  function setZoekVeld(v){ zoekVeld = v; }
+
+  async function laadRecords(){
+    const resp = await fetch("/api/records/clienten");
+    records = await resp.json();
+    if(records.length) toonRecord(0);
+  }
+
+  function toonRecord(idx){
+    if(!records.length) return;
+    const r = records[idx];
+    huidigeIdx = idx;
+    document.getElementById("recordnr").value = idx + 1;
+    for(const[k,v] of Object.entries(r))
+      if(document.getElementById(k)) document.getElementById(k).value = v ?? "";
+    isNew = false; // bestaand record
+  }
+
+  // ---------- NIEUW RECORD ----------
+  async function nieuwRecord(){
+    // Leegmaken + nieuw klant_id
+    document.querySelectorAll("input[id]").forEach(inp => inp.value = "");
+    document.getElementById("id").value = ""; // geen id = insert
+    isNew = true;
+
+    // Haal hoogste klant_id op en verhoog met 1
+    const resp = await fetch("/api/records/clienten");
+    const data = await resp.json();
+    const maxId = data.reduce((max, r) => {
+      const val = parseInt(r.klant_id || 0);
+      return val > max ? val : max;
+    }, 0);
+    document.getElementById("klant_id").value = maxId + 1;
+
+    document.getElementById("naam_client").focus();
+  }
+
+  // ---------- OPSLAAN ----------
+  async function opslaan(){
+    const data = {};
+    document.querySelectorAll("input[id]").forEach(inp => data[inp.id] = inp.value);
+
+    // Als isNew = true -> insert, anders update
+    const url = isNew ? "/api/opslaan/clienten" : "/api/opslaan/clienten";
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(data)
+    });
+    const updated = await resp.json();
+
+    if (isNew) {
+      records.push(updated);
+      huidigeIdx = records.length - 1;
+      isNew = false;
+      alert("Nieuw record opgeslagen");
+    } else {
       records[huidigeIdx] = updated;
-      alert("Opgeslagen");
+      alert("Record opgeslagen");
     }
-    async function verwijderen(){
-      if(!confirm("Record definitief verwijderen?")) return;
-      const id = document.getElementById("id").value;
-      await fetch("/api/verwijder/clienten",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({id})
-      });
-      records.splice(huidigeIdx,1);
-      if(records.length) toonRecord(Math.min(huidigeIdx, records.length-1));
-      else document.querySelector(".form-grid").reset();
-      alert("Verwijderd");
-    }
-    function eerste(){toonRecord(0);}
-    function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);}
-    function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);}
-    function laatste(){toonRecord(records.length-1);}
-    function gaNaarRecord(){
-      const nr = parseInt(document.getElementById("recordnr").value) - 1;
-      if(nr>=0 && nr<records.length) toonRecord(nr);
-    }
-    laadRecords();
-  </script>
+  }
+
+  // ---------- REST VAN DE FUNCTIES ----------
+  async function zoek(){
+    const waarde = document.getElementById(zoekVeld).value;
+    const resp = await fetch("/api/zoek/clienten",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({veld: zoekVeld, waarde})
+    });
+    records = await resp.json();
+    if(records.length) toonRecord(0);
+  }
+
+  async function verwijderen(){
+    if(!confirm("Record definitief verwijderen?")) return;
+    const id = document.getElementById("id").value;
+    if(!id) return alert("Geen record geselecteerd");
+    await fetch("/api/verwijder/clienten",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({id})
+    });
+    records.splice(huidigeIdx,1);
+    if(records.length) toonRecord(Math.min(huidigeIdx, records.length-1));
+    else document.querySelector(".form-grid").reset();
+    alert("Verwijderd");
+  }
+
+  function eerste(){toonRecord(0);}
+  function vorige(){if(huidigeIdx>0)toonRecord(huidigeIdx-1);}
+  function volgende(){if(huidigeIdx<records.length-1)toonRecord(huidigeIdx+1);}
+  function laatste(){toonRecord(records.length-1);}
+  function gaNaarRecord(){
+    const nr = parseInt(document.getElementById("recordnr").value) - 1;
+    if(nr>=0 && nr<records.length) toonRecord(nr);
+  }
+
+  laadRecords();
+</script>
 
 <!-- TABEL MODE – BEWERKBARE GRID -->
 {% else %}
