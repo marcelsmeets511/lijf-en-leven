@@ -200,7 +200,7 @@ def facturenprinten():
 
     if factuurnrlist:
         mail_pdf(factuurnrlist, len(factuurnrlist))
-
+    sb.table("overzicht").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
     print("Facturenprinten klaar!")
 
 # ---------- DIRECT UITVOEREN ----------
